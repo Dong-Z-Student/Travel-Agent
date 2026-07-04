@@ -36,17 +36,27 @@ const getDrawHint = tool => {
 const areaStyle = feature => {
   const type = feature.getGeometry()?.getType()
   const isPoint = type === 'Point'
-  return new Style({
-    image: isPoint
-      ? new Circle({
-        radius: 7,
-        fill: new Fill({ color: '#0f766e' }),
-        stroke: new Stroke({ color: '#fff', width: 3 })
-      })
-      : undefined,
-    fill: new Fill({ color: 'rgba(15, 118, 110, 0.12)' }),
-    stroke: new Stroke({ color: '#0f766e', width: 3 })
-  })
+  return [
+    new Style({
+      image: isPoint
+        ? new Circle({
+          radius: 12,
+          fill: new Fill({ color: 'rgba(20, 184, 166, 0.14)' })
+        })
+        : undefined,
+      fill: new Fill({ color: 'rgba(20, 184, 166, 0.08)' }),
+      stroke: new Stroke({ color: 'rgba(15, 118, 110, 0.72)', width: 2 })
+    }),
+    new Style({
+      image: isPoint
+        ? new Circle({
+          radius: 6,
+          fill: new Fill({ color: '#14b8a6' }),
+          stroke: new Stroke({ color: '#fff', width: 2 })
+        })
+        : undefined
+    })
+  ]
 }
 
 const createAreaLayer = feature => new VectorLayer({

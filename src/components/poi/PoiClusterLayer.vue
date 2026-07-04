@@ -6,7 +6,7 @@ import VectorLayer from 'ol/layer/Vector.js'
 import VectorSource from 'ol/source/Vector.js'
 import Cluster from 'ol/source/Cluster.js'
 import Overlay from 'ol/Overlay.js'
-import { Circle, Fill, Stroke, Style, Text } from 'ol/style.js'
+import { Circle, Fill, Icon, Stroke, Style, Text } from 'ol/style.js'
 import { boundingExtent } from 'ol/extent.js'
 import { unByKey } from 'ol/Observable.js'
 import { addLayer, removeLayerById } from '@/map-core/layerManager'
@@ -18,9 +18,23 @@ import { usePoiStore } from '@/stores/poiStore'
 import PoiPopupCard from './PoiPopupCard.vue'
 
 const CATEGORY_STYLE = {
-  scenic_spot: { color: '#e85d3f', stroke: '#fff2ec', label: '景' },
-  hotel: { color: '#2f80ed', stroke: '#edf5ff', label: '酒' },
-  metro_station: { color: '#16a36a', stroke: '#effaf4', label: '铁' }
+  scenic_spot: { color: '#e85d3f' },
+  hotel: { color: '#2f80ed' },
+  metro_station: { color: '#16a36a' }
+}
+
+const pinIconCache = new Map()
+
+const getPinIconSrc = color => {
+  if (pinIconCache.has(color)) return pinIconCache.get(color)
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+      <path d="M16 41C9.2 31.2 4 24 4 15.4 4 8.6 9.4 3 16 3s12 5.6 12 12.4C28 24 22.8 31.2 16 41Z" fill="${color}" stroke="#ffffff" stroke-width="2.7"/>
+      <circle cx="16" cy="15.4" r="5.2" fill="#ffffff" fill-opacity="0.96"/>
+    </svg>`
+  const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+  pinIconCache.set(color, src)
+  return src
 }
 
 const mapStore = useMapStore()
@@ -46,18 +60,30 @@ const makeClusterStyle = category => feature => {
   const members = feature.get('features') || []
   const size = members.length
   const style = CATEGORY_STYLE[category]
-  const radius = size > 1 ? Math.min(18 + size, 32) : 11
-  const text = size > 1 ? String(size) : style.label
 
+  if (size <= 1) {
+    return new Style({
+      image: new Icon({
+        src: getPinIconSrc(style.color),
+        imgSize: [32, 42],
+        anchor: [0.5, 1],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'fraction',
+        scale: 0.64
+      })
+    })
+  }
+
+  const radius = Math.min(14 + Math.sqrt(size) * 5, 28)
   return new Style({
     image: new Circle({
       radius,
       fill: new Fill({ color: style.color }),
-      stroke: new Stroke({ color: style.stroke, width: 3 })
+      stroke: new Stroke({ color: 'rgba(255, 255, 255, 0.95)', width: 2.5 })
     }),
     text: new Text({
-      text,
-      font: size > 1 ? '700 13px sans-serif' : '700 12px sans-serif',
+      text: String(size),
+      font: '700 12px sans-serif',
       fill: new Fill({ color: '#fff' })
     })
   })

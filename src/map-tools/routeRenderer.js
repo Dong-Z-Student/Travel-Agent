@@ -9,30 +9,62 @@ import { getActiveBaseMapKey, lonLatToMapCoord, lonLatsToMapCoords } from '@/map
 
 const routeAnimations = new Map()
 
-const routeLineStyle = new Style({
-  stroke: new Stroke({ color: '#0f766e', width: 5 })
-})
+const routeLineStyle = [
+  new Style({
+    stroke: new Stroke({
+      color: 'rgba(255, 255, 255, 0.96)',
+      width: 7,
+      lineCap: 'round',
+      lineJoin: 'round'
+    })
+  }),
+  new Style({
+    stroke: new Stroke({
+      color: '#0f766e',
+      width: 4,
+      lineCap: 'round',
+      lineJoin: 'round'
+    })
+  })
+]
 
 const stopStyle = feature => new Style({
   image: new Circle({
-    radius: 5,
+    radius: 4.5,
     fill: new Fill({ color: '#fff' }),
-    stroke: new Stroke({ color: '#0f766e', width: 3 })
+    stroke: new Stroke({ color: '#0f766e', width: 2 })
   }),
   text: new Text({
     text: feature.get('name') || '',
-    offsetY: -16,
-    font: '700 12px sans-serif',
+    offsetY: -14,
+    font: '600 11px sans-serif',
     fill: new Fill({ color: '#0f766e' }),
-    stroke: new Stroke({ color: '#fff', width: 4 })
+    stroke: new Stroke({ color: '#fff', width: 3 })
   })
 })
 
-const movingStyle = new Style({
-  image: new Circle({
-    radius: 8,
-    fill: new Fill({ color: '#f97316' }),
-    stroke: new Stroke({ color: '#fff', width: 3 })
+const movingStyle = [
+  new Style({
+    image: new Circle({
+      radius: 10,
+      fill: new Fill({ color: 'rgba(249, 115, 22, 0.22)' })
+    })
+  }),
+  new Style({
+    image: new Circle({
+      radius: 6,
+      fill: new Fill({ color: '#f97316' }),
+      stroke: new Stroke({ color: '#fff', width: 2 })
+    })
+  })
+]
+
+const trailStyle = feature => new Style({
+  stroke: new Stroke({
+    color: `rgba(249, 115, 22, ${feature.get('opacity') || 0.18})`,
+    width: feature.get('width') || 8,
+    lineCap: 'round',
+    lineJoin: 'round'
   })
 })
 
@@ -65,6 +97,18 @@ const getCoordinateAtProgress = (coords, progress) => {
   }
 
   return coords[coords.length - 1]
+}
+
+const getTrailCoordinates = (coords, progress, lengthRatio = 0.09, steps = 14) => {
+  const trail = []
+  for (let index = 0; index < steps; index += 1) {
+    const ratio = index / (steps - 1)
+    const sampleProgress = progress - lengthRatio * ratio
+    if (sampleProgress < 0) break
+    const coord = getCoordinateAtProgress(coords, sampleProgress)
+    if (coord) trail.push(coord)
+  }
+  return trail
 }
 
 export const addPlannedRoute = (map, route) => {
@@ -128,10 +172,20 @@ export const showRouteAnimation = (map, route) => {
   clearRouteAnimation(map, route.route_id)
 
   const coords = toMapCoords(map, route.geometry.coordinates)
+  const trailFeatures = Array.from({ length: 13 }, (_, index) => {
+    const feature = new Feature(new LineString([]))
+    feature.setProperties({
+      type: 'trail',
+      opacity: Math.max(0.035, 0.24 - index * 0.015),
+      width: Math.max(1.4, 13 - index * 0.85)
+    })
+    return feature
+  })
   const movingFeature = new Feature(new Point(coords[0]))
+  movingFeature.set('type', 'moving')
   const layer = new VectorLayer({
-    source: new VectorSource({ features: [movingFeature] }),
-    style: movingStyle,
+    source: new VectorSource({ features: [...trailFeatures, movingFeature] }),
+    style: feature => feature.get('type') === 'trail' ? trailStyle(feature) : movingStyle,
     zIndex: 65
   })
 
@@ -143,7 +197,7 @@ export const showRouteAnimation = (map, route) => {
   })
 
   let progress = 0
-  const speed = route.animation?.speed || 0.0025
+  const speed = route.animation?.speed || 0.00001
   const loop = route.animation?.loop !== false
 
   const render = () => {
@@ -152,7 +206,16 @@ export const showRouteAnimation = (map, route) => {
       if (!loop) return
       progress = 0
     }
-    movingFeature.getGeometry().setCoordinates(getCoordinateAtProgress(coords, progress))
+    const currentCoord = getCoordinateAtProgress(coords, progress)
+    movingFeature.getGeometry().setCoordinates(currentCoord)
+
+    const trailCoords = getTrailCoordinates(coords, progress)
+    trailFeatures.forEach((feature, index) => {
+      const head = trailCoords[index]
+      const tail = trailCoords[index + 1]
+      feature.getGeometry().setCoordinates(head && tail ? [tail, head] : [])
+    })
+
     layer.changed()
     const frameId = requestAnimationFrame(render)
     routeAnimations.set(route.route_id, { frameId, layer })

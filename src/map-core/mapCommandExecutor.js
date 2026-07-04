@@ -11,20 +11,29 @@ import { addPlannedRoute, clearAllRouteAnimations, clearPlannedRoutes, showRoute
 import { getActiveBaseMapKey, lonLatToMapCoord } from './projectionUtils'
 import { addLayer } from './layerManager'
 
-const highlightStyle = feature => new Style({
-  image: new Circle({
-    radius: 9,
-    fill: new Fill({ color: '#facc15' }),
-    stroke: new Stroke({ color: '#ef4444', width: 3 })
+const highlightStyle = feature => [
+  new Style({
+    image: new Circle({
+      radius: 13,
+      fill: new Fill({ color: 'rgba(20, 184, 166, 0.16)' }),
+      stroke: new Stroke({ color: 'rgba(20, 184, 166, 0.28)', width: 1.5 })
+    })
   }),
-  text: new Text({
-    text: feature.get('name_zh') || '',
-    offsetY: -18,
-    font: '700 12px sans-serif',
-    fill: new Fill({ color: '#7f1d1d' }),
-    stroke: new Stroke({ color: '#fff', width: 4 })
+  new Style({
+    image: new Circle({
+      radius: 6.5,
+      fill: new Fill({ color: '#14b8a6' }),
+      stroke: new Stroke({ color: 'rgba(255, 255, 255, 0.96)', width: 2 })
+    }),
+    text: new Text({
+      text: feature.get('name_zh') || '',
+      offsetY: -17,
+      font: '600 11px sans-serif',
+      fill: new Fill({ color: '#0f766e' }),
+      stroke: new Stroke({ color: 'rgba(255, 255, 255, 0.96)', width: 3 })
+    })
   })
-})
+]
 
 export class MapCommandExecutor {
   constructor({ map, layerManager = {} } = {}) {
