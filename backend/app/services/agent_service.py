@@ -5,6 +5,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.agent.orchestrator import TravelAgentOrchestrator
+from app.agent_graph.runner import GraphAgentRunner, GraphAgentUnavailable
+from app.core.config import settings
 from app.agent.state_manager import (
     normalize_conversation_id,
     resolve_owned_conversation_id,
@@ -26,7 +28,13 @@ def chat(db: Session, payload: AgentChatRequest, user: CurrentUser | None = None
         save_message(db, conversation_id=conversation_id, role="user", content=payload.message, payload={"context": payload.context})
         payload = payload.model_copy(update={"conversation_id": conversation_id})
 
-    response = TravelAgentOrchestrator(db).run(payload, user)
+    if settings.agent_engine.lower() == "graph":
+        try:
+            response = GraphAgentRunner(db).run(payload, user)
+        except GraphAgentUnavailable:
+            response = TravelAgentOrchestrator(db).run(payload, user)
+    else:
+        response = TravelAgentOrchestrator(db).run(payload, user)
 
     if user:
         save_message(db, conversation_id=conversation_id, role="assistant", content=response["reply"], payload=response)
