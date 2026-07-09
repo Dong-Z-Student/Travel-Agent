@@ -5,8 +5,6 @@ import Point from 'ol/geom/Point.js'
 import VectorLayer from 'ol/layer/Vector.js'
 import VectorSource from 'ol/source/Vector.js'
 import { Circle, Fill, Stroke, Style, Text } from 'ol/style.js'
-import { mockPois } from '@/mocks/mockPois'
-import { getMockRoute } from '@/mocks/mockRoutePlans'
 import { addPlannedRoute, clearAllRouteAnimations, clearPlannedRoutes, showRouteAnimation } from '@/map-tools/routeRenderer'
 import { getActiveBaseMapKey, lonLatToMapCoord } from './projectionUtils'
 import { addLayer } from './layerManager'
@@ -98,7 +96,7 @@ export class MapCommandExecutor {
     if (!this.map || !payload.poi_ids?.length) return null
 
     const ids = new Set(payload.poi_ids)
-    const sourcePois = payload.pois?.length ? payload.pois : mockPois.filter(poi => ids.has(poi.id))
+    const sourcePois = payload.pois || []
     const baseMapKey = getActiveBaseMapKey(this.map)
     const features = sourcePois
       .filter(poi => !ids.size || ids.has(poi.id))
@@ -133,15 +131,15 @@ export class MapCommandExecutor {
   executeADD_ROUTE(payload) {
     if (this.layerManager.addRoute) return this.layerManager.addRoute(payload)
     if (!this.map) return null
-    const route = payload.route || getMockRoute(payload.route_id)
-    return addPlannedRoute(this.map, route)
+    if (!payload.route) return null
+    return addPlannedRoute(this.map, payload.route)
   }
 
   executePLAY_ROUTE_ANIMATION(payload) {
     if (this.layerManager.playRouteAnimation) return this.layerManager.playRouteAnimation(payload)
     if (!this.map) return null
-    const route = payload.route || getMockRoute(payload.route_id)
-    return showRouteAnimation(this.map, route)
+    if (!payload.route) return null
+    return showRouteAnimation(this.map, payload.route)
   }
   executeSHOW_POPUP(payload) { return this.layerManager.showPopup?.(payload) || null }
   executeSHOW_HEATMAP(payload) { return this.layerManager.showHeatmap?.(payload) || null }
