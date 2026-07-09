@@ -21,8 +21,7 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     amap_web_service_key: str = ""
 
-    agent_mode: str = "orchestrator"
-    agent_engine: str = "legacy"
+    agent_mode: str = "graph"
     agent_timeout_seconds: int = 60
     agent_max_retries: int = 2
     deepseek_api_key: str = ""

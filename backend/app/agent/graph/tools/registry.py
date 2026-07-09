@@ -15,7 +15,7 @@ from app.agent.tools.hotel_metro_tools import (
 from app.agent.tools.poi_tools import GetPoiDetailArgs, SearchPoisArgs, get_poi_detail_tool, search_pois_tool
 from app.agent.tools.route_tools import PlanDayRouteArgs, plan_day_route_tool
 from app.agent.tools.weather_tools import GetWeatherArgs, get_weather_tool
-from app.agent_graph.schemas import GraphToolResult
+from app.agent.graph.schemas import GraphToolResult
 
 
 class ToolLimitState(BaseModel):

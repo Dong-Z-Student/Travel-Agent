@@ -11,10 +11,10 @@ from app.agent.memory_manager import load_context
 from app.agent.model_client import AgentModelCallError, AgentModelClient, AgentModelConfigError
 from app.agent.response_builder import build_map_commands
 from app.agent.state_manager import normalize_conversation_id, resolve_owned_conversation_id
-from app.agent_graph.prompts import GRAPH_REPLY_PROMPT, GRAPH_TOOL_PLAN_PROMPT, GRAPH_UNDERSTANDING_PROMPT
-from app.agent_graph.schemas import GraphToolPlan, GraphUnderstanding
-from app.agent_graph.state import GraphAgentState
-from app.agent_graph.tools import get_graph_tool_registry
+from app.agent.graph.prompts import GRAPH_REPLY_PROMPT, GRAPH_TOOL_PLAN_PROMPT, GRAPH_UNDERSTANDING_PROMPT
+from app.agent.graph.schemas import GraphToolPlan, GraphUnderstanding
+from app.agent.graph.state import GraphAgentState
+from app.agent.graph.tools import get_graph_tool_registry
 from app.core.security import CurrentUser
 from app.schemas.agent import AgentChatRequest
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from app.agent.orchestrator import TravelAgentOrchestrator
 from app.agent.state_manager import (
     normalize_conversation_id,
     resolve_owned_conversation_id,
@@ -10,8 +9,7 @@ from app.agent.state_manager import (
     upsert_conversation,
     upsert_trip_state,
 )
-from app.agent_graph.runner import GraphAgentRunner, GraphAgentUnavailable
-from app.core.config import settings
+from app.agent.graph.runner import GraphAgentRunner
 from app.core.security import CurrentUser
 from app.schemas.agent import AgentChatRequest
 from app.services.user_service import ensure_user_profile
@@ -26,13 +24,7 @@ def chat(db: Session, payload: AgentChatRequest, user: CurrentUser | None = None
         save_message(db, conversation_id=conversation_id, role="user", content=payload.message, payload={"context": payload.context})
         payload = payload.model_copy(update={"conversation_id": conversation_id})
 
-    if settings.agent_engine.lower() == "graph":
-        try:
-            response = GraphAgentRunner(db).run(payload, user)
-        except GraphAgentUnavailable:
-            response = TravelAgentOrchestrator(db).run(payload, user)
-    else:
-        response = TravelAgentOrchestrator(db).run(payload, user)
+    response = GraphAgentRunner(db).run(payload, user)
 
     if user:
         save_message(db, conversation_id=conversation_id, role="assistant", content=response["reply"], payload=response)
